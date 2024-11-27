@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ data.ticker }} Data</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+        .price-up {
+            color: green
+        }
+        .price-down {
+            color: red
+        }
+    </style>
+</head>
+<body>
+    <h1 id="price">{{ data.ticker }}: Loading...</h1>
+    <table>
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Market Cap</td>
+            <td>{{ data.marketCap }}</td>
+        </tr>
+        <tr>
+            <td>PE Ratio</td>
+            <td>{{ data.peRatio }}</td>
+        </tr>
+        <tr>
+            <td>Dividend Yield YTD</td>
+            <td>{{ data.dividendYield }}</td>
+        </tr>
+        <tr>
+            <td>EBITDA Per Share Annual</td>
+            <td>{{ data.ebitda }}</td>
+        </tr>
+        <tr>
+            <td>Revenue Per Share Annual</td>
+            <td>{{ data.revenue }}</td>
+        </tr>
+        <tr>
+            <td>Net Income Per Employee Annual</td>
+            <td>{{ data.netIncome }}</td>
+        </tr>
+        <tr>
+            <td>Debt to Equity Annual</td>
+            <td>{{ data.debtToEquity }}</td>
+        </tr>
+        <tr>
+            <td>Net Profit Margin Annual</td>
+            <td>{{ data.profitMargin }}</td>
+        </tr>
+    </table>
+    <script>
+        const socket = io();
+
+        let previousPrice = null;
+
+        socket.on('price_update', (data) => {
+            const priceElement = document.getElementById('price');
+            const newPrice = data.price;
+
+            if (previousPrice !== null) {
+                const change = newPrice - previousPrice;
+                const changeClass = change >= 0 ? 'price-up' : 'price-down';
+                priceElement.classList.add(changeClass);
+            }
+            document.getElementById('price').innerText = `${data.ticker.toUpperCase()}: $${data.price.toFixed(2)}`;
+            console.log(`price update: $${data.price.toFixed(2)}`);
+            
+            // After 1 second, reset the color back to normal
+            setTimeout(() => {
+                priceElement.classList.remove('price-up', 'price-down');
+            }, 500); // 1000 milliseconds = 1 second
+
+            previousPrice = newPrice;
+        });
+    </script>
+</body>
+</html>
