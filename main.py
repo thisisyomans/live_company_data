@@ -19,18 +19,17 @@ def debug(output):
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-current_ticker = {'ticker': None, 'stop': False}  # Shared state
-bg_task = None
+clients = {}
 
-def get_price(symbol):
-    url = f"https://finnhub.io/api/v1/quote?symbol={symbol}"
+def get_price(ticker):
+    url = f"https://finnhub.io/api/v1/quote?symbol={ticker}"
     headers = {"X-Finnhub-Token": os.getenv('FINNHUB_API_KEY')}
     response = requests.get(url, headers=headers)
     data = response.json()
     return data['c']
 
-def get_data(symbol):
-    url = f"https://finnhub.io/api/v1/stock/metric?metric=all&symbol={symbol}"
+def get_data(ticker):
+    url = f"https://finnhub.io/api/v1/stock/metric?metric=all&symbol={ticker}"
     headers = {"X-Finnhub-Token": os.getenv('FINNHUB_API_KEY')}
     response = requests.get(url, headers=headers)
     return response.json()
@@ -38,27 +37,29 @@ def get_data(symbol):
 @socketio.on('connect')
 def handle_connect():
     debug("Client connected")
-    global current_ticker, bg_task
-    if current_ticker['ticker']:
-        if bg_task is None or not bg_task.is_alive():
-            bg_task = socketio.start_background_task(send_price_updates)
+    session_id = request.sid
+    ticker = request.args.get('ticker')
+    clients[session_id] = {'ticker': ticker, 'stop': False, 'bg_task': None}
+    clients[session_id]['bg_task'] = socketio.start_background_task(send_price_updates, session_id)
 
 @socketio.on('disconnect')
 def handle_disconnect():    
     debug("Client disconnected")
-    global current_ticker, bg_task
-    current_ticker['stop'] = True  # Signal the task to stop
-    if bg_task and bg_task.is_alive():
-        bg_task.join()
-    bg_task = None
-    current_ticker['stop'] = False
+    session_id = request.sid
+    clients[session_id]['stop'] = True  # Signal the task to stop
+    if clients[session_id]['bg_task'] and clients[session_id]['bg_task'].is_alive():
+        clients[session_id]['bg_task'].join()
+    clients[session_id]['bg_task'] = None
+    del clients[session_id]
 
-def send_price_updates():
-    while not current_ticker['stop']:
-        if current_ticker['ticker']:
-            price = get_price(current_ticker['ticker'])
-            socketio.emit('price_update', {'ticker': current_ticker['ticker'], 'price': price})
-            debug(f"Sent price update for {current_ticker['ticker']}")
+def send_price_updates(session_id):
+    client_state = clients[session_id]
+    ticker = client_state['ticker']
+    while not client_state['stop']:
+        if ticker:
+            price = get_price(ticker)
+            socketio.emit('price_update', {'ticker': ticker, 'price': price}, room=session_id)
+            debug(f"Sent price update for {ticker} in room {session_id}")
         time.sleep(4)  # Adjust frequency as needed
 
 @app.route('/', methods=['GET'])
@@ -70,17 +71,13 @@ def index():
         </head>
         <body>
             <h1>Stock Data App</h1>
-            <p>Go to <a href="/AAPL">AAPL</a> for example</p>
+            <p>Go to <a href="/ticker/AAPL">AAPL</a> for example</p>
         </body>
     </html>
     """
 
-@app.route('/<string:ticker>', methods=['GET'])
+@app.route('/ticker/<string:ticker>', methods=['GET'])
 def get_metrics_table(ticker):
-    global current_ticker
-    current_ticker['ticker'] = ticker
-    current_ticker['stop'] = False
-
     data = get_data(ticker)
     data = {
         "ticker": ticker.upper(),

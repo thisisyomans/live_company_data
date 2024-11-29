@@ -1,0 +1,19 @@
+body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+table {
+    border-collapse: collapse;
+}
+th, td {
+    border: 1px solid black;
+    padding: 10px;
+}
+.price-up {
+    color: green
+}
+.price-down {
+    color: red
+}

@@ -3,24 +3,11 @@
 <head>
     <title>{{ data.ticker }} Data</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <style>
-        table {
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 10px;
-        }
-        .price-up {
-            color: green
-        }
-        .price-down {
-            color: red
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/main.css') }}">
 </head>
 <body>
-    <h1 id="price">{{ data.ticker }}: Loading...</h1>
+    <h1>{{ data.ticker }}</h1>
+    <h1 id="price">Loading...</h1>
     <table>
         <tr>
             <th>Metric</th>
@@ -60,29 +47,36 @@
         </tr>
     </table>
     <script>
-        const socket = io();
+        if (window.location.pathname.startsWith('/ticker/')) {
+            const path = window.location.pathname;
+            const ticker = path.split('/').pop();
+            const socket = io({
+                query: {
+                    ticker: ticker
+                }
+            });
 
-        let previousPrice = null;
+            let previousPrice = null;
 
-        socket.on('price_update', (data) => {
-            const priceElement = document.getElementById('price');
-            const newPrice = data.price;
+            socket.on('price_update', (data) => {
+                const priceElement = document.getElementById('price');
+                const newPrice = data.price;
 
-            if (previousPrice !== null) {
-                const change = newPrice - previousPrice;
-                const changeClass = change >= 0 ? 'price-up' : 'price-down';
-                priceElement.classList.add(changeClass);
-            }
-            document.getElementById('price').innerText = `${data.ticker.toUpperCase()}: $${data.price.toFixed(2)}`;
-            console.log(`price update: $${data.price.toFixed(2)}`);
-            
-            // After 1 second, reset the color back to normal
-            setTimeout(() => {
-                priceElement.classList.remove('price-up', 'price-down');
-            }, 500); // 1000 milliseconds = 1 second
+                if (previousPrice !== null) {
+                    const change = newPrice - previousPrice;
+                    const changeClass = change >= 0 ? 'price-up' : 'price-down';
+                    priceElement.classList.add(changeClass);
+                }
+                document.getElementById('price').innerText = `$${data.price.toFixed(2)}`;
+                console.log(`price update: $${data.price.toFixed(2)}`);
+                
+                setTimeout(() => {
+                    priceElement.classList.remove('price-up', 'price-down');
+                }, 500);
 
-            previousPrice = newPrice;
-        });
+                previousPrice = newPrice;
+            });
+        }
     </script>
 </body>
 </html>
