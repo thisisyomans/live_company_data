@@ -6,6 +6,7 @@ import json
 from flask_socketio import SocketIO
 import time
 import threading
+import sys
 
 load_dotenv()
 FINNHUB_API_KEY = os.getenv('FINNHUB_API_KEY')
@@ -103,4 +104,14 @@ def get_sessions():
 
 if __name__ == '__main__':
     DEBUG = True
-    socketio.run(app, debug=True)
+    if len(sys.argv) > 1:
+        try:
+            port = int(sys.argv[1])
+            debug(f"Running on port {port}")
+        except ValueError:
+            print("Invalid port number.")
+            sys.exit(1)
+    else:
+        print("Usage: python main.py <port>")
+        sys.exit(1)
+    socketio.run(app=app, port=port, debug=True)
