@@ -65,17 +65,7 @@ def send_price_updates(session_id):
 
 @app.route('/', methods=['GET'])
 def index():
-    return """
-    <html>
-        <head>
-            <title>Stock Data App</title>
-        </head>
-        <body>
-            <h1>Stock Data App</h1>
-            <p>Go to <a href="/ticker/AAPL">AAPL</a> for example</p>
-        </body>
-    </html>
-    """
+    return render_template('main.html')
 
 @app.route('/ticker/<string:ticker>', methods=['GET'])
 def get_metrics_table(ticker):
