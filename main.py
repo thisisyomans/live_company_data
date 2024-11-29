@@ -92,6 +92,14 @@ def get_metrics_table(ticker):
     }
     return render_template('table.html', data=data)
 
+@app.route('/sessions', methods=['GET'])
+def get_sessions():
+    data = {
+        "sessions": list(clients.keys()),
+        "count": len(clients)
+    }
+    return jsonify(data)
+
 
 if __name__ == '__main__':
     DEBUG = True
