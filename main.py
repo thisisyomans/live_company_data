@@ -94,14 +94,15 @@ def get_sessions():
 
 if __name__ == '__main__':
     DEBUG = True
-    if len(sys.argv) > 1:
+    if len(sys.argv) == 3:
         try:
-            port = int(sys.argv[1])
-            debug(f"Running on port {port}")
+            host = sys.argv[1]
+            port = int(sys.argv[2])
+            debug(f"Running on {host}:{port}")
         except ValueError:
-            print("Invalid port number.")
+            print("Invalid host or port number.")
             sys.exit(1)
     else:
-        print("Usage: python main.py <port>")
+        print("Usage: python main.py <host> <port>")
         sys.exit(1)
-    socketio.run(app=app, port=port, debug=True)
+    socketio.run(app=app, host=host, port=port, debug=True)
