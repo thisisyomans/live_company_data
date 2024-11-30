@@ -8,7 +8,7 @@ User=sysadmin
 Group=www-data
 WorkingDirectory=/home/sysadmin/live_company_data
 Environment="PATH=/home/sysadmin/envs/live_company_data/bin"
-ExecStart=/home/sysadmin/envs/live_company_data/bin/gunicorn --worker-class eventlet -w 1 live_company_data:app -b 127.0.0.1:5000 --log-level debug --capture-output
+ExecStart=/home/sysadmin/envs/live_company_data/bin/gunicorn --worker-class eventlet -w 1 live_company_data:app -b 127.0.0.1:5000 --log-level debug --capture-output --access-logformat '%({X-Forwarded-For}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 
 [Install]
 WantedBy=multi-user.target
