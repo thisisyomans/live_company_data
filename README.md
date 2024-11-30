@@ -1,6 +1,7 @@
 # Live Company Data
 
 ### Deployment Instructions (single Ubuntu VPS instance) (WIP)
+Note: this deployment is designed to be self-recovering in case of server failure. This has been tested on a 1 vcpu 1 gb ram 25 gb ssd Digital Ocean Ubunutu 24.0.4 LTS droplet.
 - get VPS instance
 - ssh in
 - create new user w/ sudo privileges
