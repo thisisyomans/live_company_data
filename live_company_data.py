@@ -2,16 +2,14 @@ from flask import Flask, request, jsonify, render_template
 import requests
 import os
 from dotenv import load_dotenv
-import json
 from flask_socketio import SocketIO
 import time
-import threading
 import sys
 
 load_dotenv()
 FINNHUB_API_KEY = os.getenv('FINNHUB_API_KEY')
 
-DEBUG = False
+DEBUG = True
 
 def debug(output):
     if DEBUG:
@@ -48,7 +46,7 @@ def handle_disconnect():
     debug("Client disconnected")
     session_id = request.sid
     clients[session_id]['stop'] = True  # Signal the task to stop
-    if clients[session_id]['bg_task'] and clients[session_id]['bg_task'].is_alive():
+    if clients[session_id]['bg_task']: #and clients[session_id]['bg_task'].is_alive():
         clients[session_id]['bg_task'].join()
     clients[session_id]['bg_task'] = None
     del clients[session_id]
@@ -91,18 +89,12 @@ def get_sessions():
     }
     return jsonify(data)
 
-
 if __name__ == '__main__':
-    DEBUG = True
-    if len(sys.argv) == 3:
+    port = 5000
+    if len(sys.argv) == 2:
         try:
-            host = sys.argv[1]
-            port = int(sys.argv[2])
-            debug(f"Running on {host}:{port}")
+            port = int(sys.argv[1])
         except ValueError:
-            print("Invalid host or port number.")
+            print("Invalid port number")
             sys.exit(1)
-    else:
-        print("Usage: python main.py <host> <port>")
-        sys.exit(1)
-    socketio.run(app=app, host=host, port=port, debug=True)
+    socketio.run(app=app, port=port, debug=DEBUG)
